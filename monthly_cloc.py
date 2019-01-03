@@ -35,7 +35,7 @@ def count_lines():
     return result.decode('utf-8').strip()
 
 def current_commit():
-    return check_output(['git', 'rev-parse', 'HEAD']).decode('utf-8').strip()
+    return check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).decode('utf-8').strip()
 
 def decode_lines(cloc_output):
     lines = [x.strip() for x in cloc_output.split("\n")]
