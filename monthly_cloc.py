@@ -34,6 +34,9 @@ def count_lines():
     result = check_output(['cloc', '--vcs=git'])
     return result.decode('utf-8').strip()
 
+def current_commit():
+    return check_output(['git', 'rev-parse', 'HEAD']).decode('utf-8').strip()
+
 def decode_lines(cloc_output):
     lines = [x.strip() for x in cloc_output.split("\n")]
     start = False
@@ -103,11 +106,17 @@ if __name__ == "__main__":
 
     dates = []
 
+    start_sha = current_commit()
+
     for month in range(months):
         date = str(add_months(start, month))
         dates.append(date)
 
-    date_stats = collect_data(dates, branch)
+    date_stats = {}
+    try:
+        date_stats = collect_data(dates, branch)
+    finally:
+        checkout_sha(start_sha)
 
     csv = format_csv(headers, date_stats)
 
