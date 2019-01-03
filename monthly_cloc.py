@@ -1,11 +1,26 @@
-import sys
 import os
+import sys
+import re
 from subprocess import check_output, check_call
 import datetime
 import calendar
 
-default_branch = 'origin/develop'
+default_branch = 'origin/master'
 headers = set()
+
+def add_months(date, months):
+    months_count = date.month + months
+
+    year = date.year + int(months_count / 12)
+
+    month = months_count % 12
+    month = 12 if month == 0 else month
+
+    day = date.day
+    last_day = calendar.monthrange(year, month)[1]
+    day = last_day if day > last_day else day
+
+    return datetime.date(year, month, day)
 
 def date_sha(date, branch):
     #print('git', 'rev-list', '-n', '1', "--before={date}".format(**locals()), branch)
@@ -25,7 +40,7 @@ def decode_lines(cloc_output):
     header = False
     result = {}
     for line in lines:
-        if len(line) and line[0] == '-':
+        if re.fullmatch(r'-+', line):
             if header:
                 start = True
             else:
@@ -43,31 +58,19 @@ def parse_line(line, result):
     result[header] = stats[4]
     return result
 
-def add_months(date, months):
-    months_count = date.month + months
-
-    year = date.year + int(months_count / 12)
-
-    month = months_count % 12
-    month = 12 if month == 0 else month
-
-    day = date.day
-    last_day = calendar.monthrange(year, month)[1]
-    day = last_day if day > last_day else day
-
-    return datetime.date(year, month, day)
-
 def str_to_date(datestr, format="%Y-%m-%d"):
     return datetime.datetime.strptime(datestr, format).date()
 
-def parse_args(args):
-    if not len(args) >= 3:
-        raise ValueError('Date and month count parameters required')
+def collect_data(dates, branch):
+    collected_data = {}
+    for date in dates:
+        sha = date_sha(date, branch)
+        checkout_sha(sha)
+        cloc_output = count_lines()
+        stats = decode_lines(cloc_output)
+        collected_data[date] = stats
 
-    start = str_to_date(args[1])
-    months = int(args[2])
-    branch = args[3] if len(args) > 3 else default_branch
-    return start, months, branch
+    return collected_data
 
 def format_csv(headers, data):
     outlines = []
@@ -85,17 +88,15 @@ def format_csv(headers, data):
 
     return "\n".join(outlines)
 
-def collect_data(dates, branch):
-    collected_data = {}
-    for date in dates:
-        sha = date_sha(date, branch)
-        checkout_sha(sha)
-        cloc_output = count_lines()
-        stats = decode_lines(cloc_output)
-        collected_data[date] = stats
+def parse_args(args):
+    if not len(args) >= 3:
+        print('Usage: monthly_cloc YYYY-mm-dd month_count [git_branch]')
+        exit(1)
 
-    return collected_data
-
+    start = str_to_date(args[1])
+    months = int(args[2])
+    branch = args[3] if len(args) > 3 else default_branch
+    return start, months, branch
 
 if __name__ == "__main__":
     start, months, branch = parse_args(sys.argv)
