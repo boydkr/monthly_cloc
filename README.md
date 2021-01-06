@@ -1,6 +1,10 @@
 # monthly_cloc
 Count lines of code in a project over time
 
+Execute from the root directory of a git project.  It will check out the specified branch (or `master`) at monthly intervals from the specified date, for the specified number of months
+
+The output can be piped to a csv file for easy consumption.
+
 ## Dependencies
 
  * cloc ([Count lines of code](https://github.com/AlDanial/cloc/))
