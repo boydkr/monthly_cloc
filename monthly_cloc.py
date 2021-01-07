@@ -12,7 +12,7 @@ headers = set()
 def add_months(date, months):
     months_count = date.month + months
 
-    year = date.year + int(months_count / 12)
+    year = date.year + int((months_count - 1) / 12)
 
     month = months_count % 12
     month = 12 if month == 0 else month
